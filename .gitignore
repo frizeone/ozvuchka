@@ -1,0 +1,25 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+
+# ===== Рабочие данные (не попадают в репозиторий) =====
+# input:  ваши документы для озвучки
+input/*
+!input/.gitkeep
+# output: сгенерированные аудиофайлы
+output/*
+!output/.gitkeep
+# reference: ваши записи голоса для клонирования
+reference/*
+!reference/.gitkeep
+
+# ===== IDE / ОС =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

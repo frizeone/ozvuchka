@@ -1,0 +1,13 @@
+TTS==0.22.0
+# TTS 0.22.0 несовместим с transformers 5.x (там удалён BeamSearchScorer),
+# поэтому фиксируем последнюю стабильную версию 4.x
+transformers==4.44.2
+# Gradio 4.44.1 не работает с pydantic 2.11+ (ломается генерация JSON-схемы /info)
+pydantic==2.9.2
+# ...и с fastapi/starlette 1.x (2026) — ломается TemplateResponse. Фиксируем версии эпохи Gradio 4.44
+fastapi==0.115.12
+starlette==0.41.3
+soundfile>=0.12.1
+python-docx==1.1.0
+PyPDF2==3.0.1
+gradio==4.44.1

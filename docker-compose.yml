@@ -1,0 +1,64 @@
+name: ozvuchka
+
+services:
+  ui:
+    build: .
+    image: xtts-ozvuchka
+    container_name: xtts-ui
+    ports:
+      - "7860:7860"
+    command: ["python", "app/ui.py"]
+    volumes:
+      # Синтаксис ./ работает в Docker Desktop для Windows (PowerShell)
+      - ./input:/input:ro
+      - ./output:/output
+      - ./reference:/reference
+      # Кэш модели (~2 ГБ) сохраняется между запусками и не скачивается заново
+      - tts-models:/root/.local/share/tts
+    environment:
+      - INPUT_DIR=/input
+      - OUTPUT_DIR=/output
+      - LANGUAGE=ru
+      - REFERENCE_AUDIO=/reference/male_voice.wav
+      - OUTPUT_FORMAT=wav
+      - SAMPLE_RATE=24000
+    # GPU NVIDIA через Docker Desktop + WSL2 (у вас RTX 4070 — оставьте этот блок)
+    # Если видеокарты нет — удалите блоки deploy из обоих сервисов
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Пакетный режим: озвучивает всё из input/ и завершается.
+  # Запускается отдельной командой (см. README), при обычном docker compose up не стартует.
+  batch:
+    profiles: ["batch"]
+    build: .
+    image: xtts-ozvuchka
+    container_name: xtts-batch
+    command: ["python", "app/main.py"]
+    volumes:
+      - ./input:/input:ro
+      - ./output:/output
+      - ./reference:/reference
+      - tts-models:/root/.local/share/tts
+    environment:
+      - INPUT_DIR=/input
+      - OUTPUT_DIR=/output
+      - LANGUAGE=ru
+      - REFERENCE_AUDIO=/reference/male_voice.wav
+      - OUTPUT_FORMAT=wav
+      - SAMPLE_RATE=24000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  tts-models:
