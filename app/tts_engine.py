@@ -18,7 +18,9 @@ class TTSEngine:
     # длинные тексты нужно разбивать и склеивать
     MAX_CHARS_PER_CHUNK = 250
     # Встроенные мужские голоса XTTS v2 (используется первый доступный)
-    MALE_SPEAKERS = ['Randall Hood', 'Damien Black', 'Andrew Chipper', 'Craig Gutsy']
+    MALE_SPEAKERS = ['Damien Black', 'Andrew Chipper', 'Craig Gutsy', 'Dionisio Schuyler', 'Royston Min']
+    # Запасной голос по умолчанию — встроенный мужской голос XTTS v2
+    DEFAULT_SPEAKER = 'Damien Black'
 
     def __init__(self, language: str = 'ru'):
         self.language = language
@@ -29,10 +31,26 @@ class TTSEngine:
         self.tts = TTS('tts_models/multilingual/multi-dataset/xtts_v2')
         self.tts.to(self.device)
 
-        self.available_speakers = list(getattr(self.tts, 'speakers', []) or [])
+        self.available_speakers = self._resolve_speakers()
+        # Голос по умолчанию: сначала мужской из списка модели, затем любой доступный,
+        # в самом крайнем случае — запасное имя голоса XTTS v2
         self.speaker = next((s for s in self.MALE_SPEAKERS if s in self.available_speakers), None)
-        if self.speaker:
-            print(f'🎤 Встроенный голос по умолчанию: {self.speaker}')
+        if self.speaker is None and self.available_speakers:
+            self.speaker = self.available_speakers[0]
+        if self.speaker is None:
+            self.speaker = self.DEFAULT_SPEAKER
+        print(f'🎤 Голос по умолчанию: {self.speaker}')
+
+    def _resolve_speakers(self):
+        """Возвращает список встроенных голосов модели (устойчиво к разным версиям TTS)."""
+        speakers = getattr(self.tts, 'speakers', None)
+        if speakers:
+            return list(speakers)
+        model = getattr(self.tts, 'synthesizer', None)
+        tts_model = getattr(model, 'tts_model', None)
+        manager = getattr(tts_model, 'speaker_manager', None)
+        speakers = getattr(manager, 'speakers', None)
+        return list(speakers) if speakers else []
 
     def _split_text(self, text: str):
         """Разбивает текст на фрагменты, подходящие для XTTS v2."""
@@ -83,11 +101,11 @@ class TTSEngine:
             kwargs['speaker_wav'] = reference_audio
             print(f'🎭 Клонирование голоса из: {reference_audio}')
         else:
-            chosen = speaker or self.speaker
-            if not chosen:
-                raise RuntimeError(
-                    'Не найден голос: загрузите референс или выберите встроенный голос.'
-                )
+            chosen = speaker or self.speaker or self.DEFAULT_SPEAKER
+            # Страховка от неверного имени голоса: если выбранного нет в списке модели,
+            # берём первый доступный встроенный голос
+            if self.available_speakers and chosen not in self.available_speakers:
+                chosen = self.available_speakers[0]
             kwargs['speaker'] = chosen
             print(f'🎤 Используется голос: {chosen}')
 

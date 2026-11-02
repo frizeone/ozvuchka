@@ -82,12 +82,13 @@ with gr.Blocks(
             )
         with gr.Column(scale=2):
             speaker = gr.Dropdown(
-                label='🎤 Встроенный голос',
+                label=f'🎤 Встроенный голос (по умолчанию: {engine.speaker})',
                 choices=engine.available_speakers,
                 value=engine.speaker,
             )
             gr.Markdown(
                 '💡 Встроенные голоса на русском звучат с акцентом. '
+                'Если ничего не выбирать — используется голос по умолчанию. '
                 'Для естественного звучания запишите или загрузите референс ниже — голос будет склонирован.'
             )
             reference = gr.Audio(
